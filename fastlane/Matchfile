@@ -1,0 +1,12 @@
+git_url "git@github.com:edcs/app-certs.git"
+git_branch “master”
+
+for_platform :ios do
+    type "appstore"
+    app_identifier ENV["APP_IDENTIFIER"]
+
+    for_lane :development do
+        type "development"
+        app_identifier “me.edcs.app.debug”
+    end
+end
