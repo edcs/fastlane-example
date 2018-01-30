@@ -33,7 +33,7 @@ private_lane :set_version_number do
     set_info_plist_value(
         path: "./ios/App/Info.plist",
         key: "CFBundleShortVersionString",
-        value: ENV["VERSION_NUMBER"]
+        value: ENV["VERSION_NUMBER"].to_s
     )
 end
 
