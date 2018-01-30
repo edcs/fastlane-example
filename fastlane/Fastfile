@@ -1,0 +1,63 @@
+default_platform :ios
+
+platform :ios do
+    desc "Resets the git repo after building"
+    after_all do |lane, options|
+        sh "git checkout -- ../ios/App.xcodeproj/project.pbxproj ../ios/App/Info.plist"
+    end
+
+    desc "Resets the git repo after an error"
+    error do |lane, exception, options|
+        sh "git checkout -- ../ios/App.xcodeproj/project.pbxproj ../ios/App/Info.plist"
+    end
+
+    desc "Releases an iOS build to TestFlight/iTunes Connect"
+    lane :release do
+        match
+        set_version_number
+        set_build_number
+        set_display_name
+        gym
+        sentry_release
+        pilot(skip_waiting_for_build_processing: true)
+    end
+
+    desc "Installs provisioning profile for over-the-wire builds using Xcode"
+    lane :development do
+        match
+    end
+end
+
+desc "Sets the app version number from the environment"
+private_lane :set_version_number do
+    set_info_plist_value(
+        path: "./ios/App/Info.plist",
+        key: "CFBundleShortVersionString",
+        value: ENV["VERSION_NUMBER"]
+    )
+end
+
+desc "Sets the app build number from the environment"
+private_lane :set_build_number do
+    increment_build_number(
+        build_number: ENV["BUILD_NUMBER"].to_s,
+        xcodeproj: "./ios/App.xcodeproj"
+    )
+end
+
+desc "Sets the app display name from the environment"
+private_lane :set_display_name do
+    set_info_plist_value(
+        path: "./ios/App/Info.plist",
+        key: "CFBundleDisplayName",
+        value: ENV["DISPLAY_NAME"]
+    )
+end
+
+desc "Releases current build information to Sentry"
+private_lane :sentry_release do
+  sentry_create_release(
+    version: "#{ENV["DISPLAY_NAME"]} #{ENV["VERSION_NUMBER"].to_s} (#{ENV["BUILD_NUMBER"].to_s})",
+    finalize: true
+  )
+end
