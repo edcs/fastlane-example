@@ -1,0 +1,7 @@
+for_platform :ios do
+    clean true
+    configuration ENV["BUILD_CONFIGURATION"]
+    output_directory "./build"
+    project "./ios/App.xcodeproj"
+    scheme “App”
+end
