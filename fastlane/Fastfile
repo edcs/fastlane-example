@@ -28,6 +28,39 @@ platform :ios do
     end
 end
 
+platform :android do
+  desc "Release an Android build to Google Play"
+  lane :release do
+    sh("rm -rf *.realm.*")
+
+    gradle(project_dir: "./android", task: "clean")
+
+    gradle(
+      build_type: "Release",
+      properties: {
+        "versionCode" => ENV["BUILD_NUMBER"].to_s,
+        "versionName" => ENV["VERSION_NUMBER"].to_s
+      },
+      project_dir: "./android",
+      task: "assemble"
+    )
+
+    sign_apk(
+      alias: ENV["KEYSTORE_ALIAS"],
+      keystore_path: ENV["KEYSTORE_PATH"],
+      storepass: ENV["KEYSTORE_PASS"],
+      tsa: "http://timestamp.comodoca.com/rfc316",
+    )
+
+    upload_to_play_store(
+      apk: Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH],
+      json_key: ENV["SERVICE_ACCOUNT_JSON_PATH"],
+      package_name: ENV["BUNDLE_IDENTIFIER"],
+      track: "alpha",
+    )
+  end
+end
+
 desc "Sets the app version number from the environment"
 private_lane :set_version_number do
     set_info_plist_value(
