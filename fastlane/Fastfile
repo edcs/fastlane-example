@@ -51,6 +51,8 @@ platform :android do
       storepass: ENV["KEYSTORE_PASS"],
       tsa: "http://timestamp.comodoca.com/rfc316",
     )
+      
+    zipalign(apk_path: Actions.lane_context[SharedValues::SIGNED_APK_PATH])
 
     upload_to_play_store(
       apk: Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH],
