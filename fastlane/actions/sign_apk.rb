@@ -11,23 +11,24 @@ module Fastlane
 
         UI.user_error("Need keystore in order to sign apk") unless params[:keystore_path]
 
-        sign_cmd = ["jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1"]
-        sign_cmd << ["-keystore #{params[:keystore_path].shellescape}" ] if params[:keystore_path]
-        sign_cmd << ["#{params[:apk_path].shellescape}"] if params[:apk_path]
-        sign_cmd << ["'#{params[:alias]}'"] if params[:alias]
-        sign_cmd << ["-keypass #{params[:keypass] ? params[:keypass] : params[:storepass]}"] if params[:keypass] || params[:storepass]
-        sign_cmd << ["-storepass #{params[:storepass]}"] if params[:storepass]
-        sign_cmd << ["-tsa #{params[:tsa]}"] if params[:tsa]
+        sign_cmd = ["apksigner sign"]
+        sign_cmd << ["--ks #{params[:keystore_path].shellescape}" ] if params[:keystore_path]
+        sign_cmd << ["--ks-key-alias #{params[:alias]}"] if params[:alias]
+        sign_cmd << ["--key-pass pass:#{params[:keypass] ? params[:keypass] : params[:storepass]}"] if params[:keypass] || params[:storepass]
+        sign_cmd << ["--ks-pass pass:#{params[:storepass]}"] if params[:storepass]
 
         if params[:signed_apk_path]
-          sign_cmd << ["-signedjar #{params[:signed_apk_path]}" ]
+          sign_cmd << ["--out #{params[:signed_apk_path]}" ]
           Actions.lane_context[SharedValues::SIGNED_APK_PATH] = "#{params[:signed_apk_path]}"
         elsif params[:apk_path].include?("unsigned")
-          sign_cmd << ["-signedjar #{params[:apk_path].gsub('-unsigned', '')}"]
+          sign_cmd << ["--out #{params[:apk_path].gsub('-unsigned', '')}"]
           Actions.lane_context[SharedValues::SIGNED_APK_PATH] = "#{params[:apk_path].gsub('-unsigned', '')}"
         end
 
+        sign_cmd << ["#{params[:apk_path].shellescape}"] if params[:apk_path]
+
         Fastlane::Actions.sh(sign_cmd, log: true)
+        Fastlane::Actions.sh("apksigner verify #{Actions.lane_context[SharedValues::SIGNED_APK_PATH]}", log: true)
       end
 
         #####################################################
